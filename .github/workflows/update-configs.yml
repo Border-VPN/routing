@@ -18,6 +18,13 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      happ_default: ${{ steps.deeplinks.outputs.happ_default }}
+      happ_whitelist: ${{ steps.deeplinks.outputs.happ_whitelist }}
+      happ_json: ${{ steps.deeplinks.outputs.happ_json }}
+      incy_default: ${{ steps.deeplinks.outputs.incy_default }}
+      incy_whitelist: ${{ steps.deeplinks.outputs.incy_whitelist }}
+      incy_json: ${{ steps.deeplinks.outputs.incy_json }}
 
     steps:
       - uses: actions/checkout@v6
@@ -198,24 +205,33 @@ jobs:
           git commit -m "$(date -u +%Y%m%d%H%M)"
           git push
 
+      - name: Export deeplinks
+        id: deeplinks
+        shell: bash
+        run: |
+          echo "happ_default=$(tr -d '\n\r' < HAPP/DEFAULT.DEEPLINK)" >> "$GITHUB_OUTPUT"
+          echo "happ_whitelist=$(tr -d '\n\r' < HAPP/WHITELIST.DEEPLINK)" >> "$GITHUB_OUTPUT"
+          echo "happ_json=$(tr -d '\n\r' < HAPP/JSONSUB.DEEPLINK)" >> "$GITHUB_OUTPUT"
+          echo "incy_default=$(tr -d '\n\r' < INCY/DEFAULT.DEEPLINK)" >> "$GITHUB_OUTPUT"
+          echo "incy_whitelist=$(tr -d '\n\r' < INCY/WHITELIST.DEEPLINK)" >> "$GITHUB_OUTPUT"
+          echo "incy_json=$(tr -d '\n\r' < INCY/JSONSUB.DEEPLINK)" >> "$GITHUB_OUTPUT"
+
   deploy:
     needs: update
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
-
       - name: Deploy to servers
         shell: bash
         run: |
           set -euo pipefail
 
-          HAPP_DEFAULT=$(tr -d '\n\r' < HAPP/DEFAULT.DEEPLINK)
-          HAPP_WHITELIST=$(tr -d '\n\r' < HAPP/WHITELIST.DEEPLINK)
-          HAPP_JSON=$(tr -d '\n\r' < HAPP/JSONSUB.DEEPLINK)
-          INCY_DEFAULT=$(tr -d '\n\r' < INCY/DEFAULT.DEEPLINK)
-          INCY_WHITELIST=$(tr -d '\n\r' < INCY/WHITELIST.DEEPLINK)
-          INCY_JSON=$(tr -d '\n\r' < INCY/JSONSUB.DEEPLINK)
+          HAPP_DEFAULT="${{ needs.update.outputs.happ_default }}"
+          HAPP_WHITELIST="${{ needs.update.outputs.happ_whitelist }}"
+          HAPP_JSON="${{ needs.update.outputs.happ_json }}"
+          INCY_DEFAULT="${{ needs.update.outputs.incy_default }}"
+          INCY_WHITELIST="${{ needs.update.outputs.incy_whitelist }}"
+          INCY_JSON="${{ needs.update.outputs.incy_json }}"
 
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
