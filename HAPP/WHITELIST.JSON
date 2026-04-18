@@ -29,9 +29,7 @@
   "ProxySites": [],
   "ProxyIp": [],
   "BlockSites": [
-    "geosite:win-spy",
-    "geosite:torrent",
-    "geosite:category-ads"
+    "geosite:torrent"
   ],
   "BlockIp": [],
   "DomainStrategy": "IPIfNonMatch",
